@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMP Muhammadiyah 2 Surabaya (SPEMDA)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        muda: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 800: '#1e40af', 900: '#1e3a8a' },
+                        accent: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #1e3a8a; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Dynamic Hero Pattern overlay */
+        .hero-pattern-overlay {
+            background: linear-gradient(rgba(30, 58, 138, 0.85), rgba(30, 58, 138, 0.95));
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .filter-btn.active, .filter-btn-prestasi.active, .filter-btn-berita.active { background-color: #1e3a8a !important; color: white !important; border-color: #1e3a8a !important; }
+
+        /* Admin Inline Editing Styles */
+        body.admin-mode .admin-only { display: block !important; }
+        body.admin-mode .admin-only-flex { display: flex !important; }
+        .admin-only, .admin-only-flex { display: none !important; }
+        
+        body.admin-mode .editable { outline: 2px dashed #f59e0b; outline-offset: 4px; border-radius: 4px; transition: all 0.2s; min-height: 20px;}
+        body.admin-mode .editable:hover { background-color: rgba(245, 158, 11, 0.15); cursor: text; }
+        body.admin-mode .editable:focus { outline: 2px solid #2563eb; background-color: white; color: #1f2937; }
+        
+        body.admin-mode .editable-img { outline: 3px dashed #f59e0b; cursor: pointer; transition: all 0.2s; }
+        body.admin-mode .editable-img:hover { opacity: 0.7; filter: brightness(0.8); }
+        
+        body.admin-mode .editable-link { outline: 2px dashed #10b981; cursor: pointer; position: relative; }
+        body.admin-mode .editable-link::after { content: "✏️ Edit Link"; position: absolute; top: -25px; right: 0; background: #10b981; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; pointer-events: none;}
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased flex flex-col min-h-screen relative">
+
+    <!-- FLOATING ADMIN TOOLBAR -->
+    <div id="admin-toolbar" class="fixed bottom-0 left-0 w-full bg-muda-900 border-t-4 border-accent-500 text-white p-3 z-[999] shadow-2xl admin-only-flex justify-between items-center transform transition-transform duration-300">
+        <div class="flex items-center gap-3">
+            <div class="bg-accent-500 text-white w-10 h-10 rounded-full flex items-center justify-center animate-pulse"><i class="fas fa-tools"></i></div>
+            <div>
+                <h4 class="font-bold text-sm">Mode Admin Aktif</h4>
+                <p class="text-[10px] text-gray-300">Klik area dengan garis putus-putus oranye untuk mengedit teks, gambar, atau link.</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="saveStaticEdits(event)" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-2 transition"><i class="fas fa-save"></i> Simpan Halaman</button>
+            <button onclick="logoutAdmin()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg font-bold text-sm shadow flex items-center gap-2 transition"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+        </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="bg-muda-900 text-white py-2 px-4 text-sm hidden md:block">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex gap-6">
+                <span class="flex items-center gap-2"><i class="fas fa-phone text-accent-400"></i> <span id="edit-top-phone" class="editable">(031) 123-4567</span></span>
+                <span class="flex items-center gap-2"><i class="fas fa-envelope text-accent-400"></i> <span id="edit-top-email" class="editable">info@smpm2sby.sch.id</span></span>
+            </div>
+            <div class="flex gap-4">
+                <a href="#" id="link-fb" class="editable-link hover:text-accent-400 transition"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" id="link-ig" class="editable-link hover:text-accent-400 transition"><i class="fab fa-instagram"></i></a>
+                <a href="#" id="link-yt" class="editable-link hover:text-accent-400 transition"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+                <div class="flex items-center cursor-pointer group" onclick="nav('home')">
+                    <img id="edit-logo-nav" src="https://image2url.com/r2/default/images/1774449709726-4374bfeb-e350-4bc6-b05e-32bfcc5d22e4.png" alt="Logo SPEMDA" class="w-12 h-12 object-cover mr-3 shadow-sm group-hover:scale-105 transition rounded-full border border-gray-100 bg-white editable-img">
+                    <div>
+                        <h1 id="edit-brand-name" class="font-bold text-xl text-muda-900 leading-tight editable">SPEMDA</h1>
+                        <p id="edit-brand-sub" class="text-[10px] md:text-xs text-gray-500 tracking-wider font-medium editable">SMP Muhammadiyah 2 Surabaya</p>
+                    </div>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden lg:flex items-center space-x-6">
+                    <a href="#" onclick="nav('home')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Beranda</a>
+                    <a href="#" onclick="nav('profil')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Profil</a>
+                    <a href="#" onclick="nav('prestasi')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Prestasi</a>
+                    <a href="#" onclick="nav('ekskul')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Kesiswaan</a>
+                    <a href="#" onclick="nav('fasilitas')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Fasilitas</a>
+                    <a href="#" onclick="nav('berita')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Berita</a>
+                    <a href="#" onclick="nav('kontak')" class="nav-link font-medium text-gray-600 hover:text-muda-600 transition">Kontak</a>
+                    <a href="#" onclick="nav('ppdb')" class="bg-accent-500 text-white px-6 py-2.5 rounded-full font-bold hover:bg-accent-600 transition shadow-lg shadow-accent-500/30 animate-bounce">Info PPDB</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center lg:hidden">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-muda-900 focus:outline-none p-2 rounded-md hover:bg-gray-100">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl z-40">
+            <div class="px-4 pt-2 pb-6 space-y-1">
+                <a href="#" onclick="nav('home')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Beranda</a>
+                <a href="#" onclick="nav('profil')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Profil</a>
+                <a href="#" onclick="nav('prestasi')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Prestasi</a>
+                <a href="#" onclick="nav('ekskul')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Kesiswaan & Ekskul</a>
+                <a href="#" onclick="nav('fasilitas')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Fasilitas</a>
+                <a href="#" onclick="nav('berita')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Berita & Artikel</a>
+                <a href="#" onclick="nav('kontak')" class="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-muda-50 hover:text-muda-600 rounded-md border-b border-gray-50">Kontak Kami</a>
+                <a href="#" onclick="nav('ppdb')" class="block px-3 py-3 mt-4 text-center text-base font-bold text-white bg-accent-500 hover:bg-accent-600 rounded-md shadow">Info PPDB</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow">
+        
+        <!-- ==================== BERANDA ==================== -->
+        <div id="view-home" class="view-section relative">
+            
+            <!-- Hero Section -->
+            <div class="relative">
+                <img id="edit-hero-bg" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1920&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover editable-img" alt="Hero Background">
+                <div class="hero-pattern-overlay absolute inset-0"></div>
+                
+                <div class="py-32 md:py-48 px-4 text-center text-white relative z-10">
+                    <div class="max-w-4xl mx-auto">
+                        <span id="edit-hero-tag" class="bg-accent-500 text-white text-xs md:text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6 inline-block shadow editable">Sekolah Berkemajuan</span>
+                        <h1 id="edit-hero-title" class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight drop-shadow-lg editable">Membentuk Generasi <br><span class="text-accent-400">Qur'ani & Berprestasi</span></h1>
+                        <p id="edit-hero-desc" class="text-lg md:text-xl text-gray-200 mb-10 max-w-2xl mx-auto drop-shadow editable">Sekolah Menengah Pertama Muhammadiyah 2 Surabaya (SPEMDA) adalah wadah pendidikan terbaik yang memadukan IPTEK dan IMTAQ untuk putra-putri Anda.</p>
+                        <div class="flex flex-col sm:flex-row justify-center gap-4">
+                            <button onclick="nav('ppdb')" class="bg-accent-500 hover:bg-accent-600 text-white font-bold py-3.5 px-8 rounded-full transition shadow-xl text-lg flex items-center justify-center gap-2"><i class="fas fa-user-graduate"></i> Info PPDB 2024/2025</button>
+                            <button onclick="nav('profil')" class="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/50 text-white font-bold py-3.5 px-8 rounded-full transition flex items-center justify-center gap-2"><i class="fas fa-play-circle"></i> Jelajahi Profil</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Berita & Prestasi -->
+            <div class="max-w-7xl mx-auto px-4 py-20">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    <!-- Kolom Berita Terbaru -->
+                    <div class="relative">
+                        <div class="flex justify-between items-end mb-8">
+                            <div><h2 class="text-3xl font-bold text-muda-900">Berita Terbaru</h2><div class="w-16 h-1.5 bg-accent-500 mt-2 rounded"></div></div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="openModal('Berita')" class="admin-only bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition shadow"><i class="fas fa-plus"></i> Tambah</button>
+                                <a href="#" onclick="nav('berita')" class="text-muda-600 font-semibold hover:underline text-sm">Lihat Semua &rarr;</a>
+                            </div>
+                        </div>
+                        <div id="home-berita-grid" class="flex flex-col gap-6">
+                            <div class="text-center py-10"><div class="loader mx-auto"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Kolom Prestasi Terbaru -->
+                    <div>
+                        <div class="flex justify-between items-end mb-8">
+                            <div><h2 class="text-3xl font-bold text-muda-900">Prestasi Siswa</h2><div class="w-16 h-1.5 bg-accent-500 mt-2 rounded"></div></div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="openModal('Prestasi')" class="admin-only bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition shadow"><i class="fas fa-plus"></i> Tambah</button>
+                                <a href="#" onclick="nav('prestasi')" class="text-muda-600 font-semibold hover:underline text-sm">Lihat Galeri &rarr;</a>
+                            </div>
+                        </div>
+                        <div id="home-prestasi-grid" class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2 text-center py-10"><div class="loader mx-auto"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testimoni Singkat -->
+            <div class="bg-muda-900 text-white py-20 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;"></div>
+                <div class="max-w-7xl mx-auto px-4 text-center relative z-10">
+                    <i class="fas fa-quote-left text-5xl text-accent-400 mb-6 opacity-80"></i>
+                    <p id="edit-testimoni-text" class="text-xl md:text-3xl font-medium italic max-w-4xl mx-auto leading-relaxed editable">"Pendidikan karakter di SPEMDA sangat kuat. Saya tidak hanya diajarkan ilmu dunia, tetapi juga bekal agama yang menjadi fondasi kesuksesan saya saat ini."</p>
+                    <div class="mt-10 flex items-center justify-center gap-4">
+                        <img id="edit-testimoni-img" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop" class="w-16 h-16 rounded-full border-2 border-accent-500 object-cover shadow-lg editable-img">
+                        <div class="text-left">
+                            <h4 id="edit-testimoni-name" class="font-bold text-lg text-accent-400 editable">Dr. H. Ahmad Fulan</h4>
+                            <p id="edit-testimoni-job" class="text-sm text-gray-300 editable">Alumni 2005 - Dokter Spesialis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PROFIL SEKOLAH ==================== -->
+        <div id="view-profil" class="view-section hidden">
+            <div class="bg-muda-900 py-16 text-center text-white">
+                <h1 class="text-4xl font-bold mb-4">Profil SPEMDA</h1>
+                <p class="text-gray-300 max-w-2xl mx-auto px-4">Mengenal lebih dekat identitas, visi misi, dan keluarga besar tenaga pendidik kami.</p>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 py-16">
+                <!-- Sejarah & Sambutan -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+                    <div class="space-y-10">
+                        <div>
+                            <h2 class="text-3xl font-bold text-muda-900 mb-4">Sejarah Singkat</h2>
+                            <div class="w-16 h-1.5 bg-accent-500 mb-6 rounded"></div>
+                            <p id="edit-sejarah" class="text-gray-600 leading-relaxed text-justify editable">SMP Muhammadiyah 2 Surabaya (SPEMDA) berdiri sejak tahun 1970. Dengan tekad mencerdaskan kehidupan bangsa berdasarkan nilai-nilai Islam, sekolah ini terus berkembang menjadi salah satu sekolah menengah unggulan di Kota Surabaya. Kami terus beradaptasi dengan kemajuan teknologi untuk menciptakan lingkungan belajar yang inspiratif.</p>
+                        </div>
+                        
+                        <div>
+                            <h2 class="text-3xl font-bold text-muda-900 mb-4">Visi & Misi</h2>
+                            <div class="w-16 h-1.5 bg-accent-500 mb-6 rounded"></div>
+                            <div class="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                <h3 class="font-bold text-muda-900 mb-2 flex items-center gap-2"><i class="fas fa-eye text-accent-500"></i> Visi:</h3>
+                                <p id="edit-visi" class="text-gray-700 italic mb-6 editable">"Terwujudnya insan pembelajar yang berakhlak mulia, cerdas, terampil, dan peduli lingkungan."</p>
+                                
+                                <h3 class="font-bold text-muda-900 mb-3 flex items-center gap-2"><i class="fas fa-bullseye text-accent-500"></i> Misi:</h3>
+                                <ul id="edit-misi" class="space-y-3 editable">
+                                    <li class="flex items-start gap-3"><i class="fas fa-check-circle text-muda-600 mt-1"></i> <span class="text-gray-600">Menanamkan akidah dan akhlak Islami dalam kehidupan sehari-hari.</span></li>
+                                    <li class="flex items-start gap-3"><i class="fas fa-check-circle text-muda-600 mt-1"></i> <span class="text-gray-600">Menyelenggarakan pembelajaran inovatif berbasis teknologi.</span></li>
+                                    <li class="flex items-start gap-3"><i class="fas fa-check-circle text-muda-600 mt-1"></i> <span class="text-gray-600">Mengembangkan potensi bakat secara optimal melalui intrakurikuler dan ekstrakurikuler.</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:pl-10">
+                        <div class="bg-white p-8 rounded-3xl shadow-xl relative border border-gray-100 text-center mt-12 lg:mt-0">
+                            <div class="absolute -top-16 left-1/2 transform -translate-x-1/2">
+                                <img id="edit-kepsek-img" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=200&h=200&auto=format&fit=crop" class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover editable-img">
+                            </div>
+                            <div class="mt-16">
+                                <h3 id="edit-kepsek-name" class="text-2xl font-bold text-gray-900 editable">Drs. H. Fulan, M.Pd</h3>
+                                <p class="text-sm text-white bg-muda-600 inline-block px-4 py-1 rounded-full font-semibold mb-8 mt-2 shadow-sm">Kepala Sekolah</p>
+                                <i class="fas fa-quote-left text-4xl text-gray-200 mb-4 block"></i>
+                                <p id="edit-kepsek-msg" class="text-gray-600 italic leading-relaxed text-justify px-4 editable">"Selamat datang di website resmi SMP Muhammadiyah 2 Surabaya. Kami berkomitmen memberikan layanan pendidikan yang memadukan IPTEK (Ilmu Pengetahuan dan Teknologi) dan IMTAQ (Iman dan Taqwa). Melalui website ini, kami berharap dapat memberikan informasi akurat kepada masyarakat."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profil Guru -->
+                <div class="pt-10 border-t border-gray-200 relative">
+                    <div class="text-center mb-12">
+                        <h2 class="text-3xl font-bold text-muda-900 mb-4">Tenaga Pendidik & Staf</h2>
+                        <div class="w-20 h-1.5 bg-accent-500 mx-auto rounded mb-4"></div>
+                        <button onclick="openModal('Guru')" class="admin-only inline-block bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 mx-auto shadow transition"><i class="fas fa-plus"></i> Tambah Guru Baru</button>
+                    </div>
+                    <div id="guru-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        <!-- Loaded via JS -->
+                        <div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PRESTASI ==================== -->
+        <div id="view-prestasi" class="view-section hidden bg-gray-50">
+             <div class="bg-muda-900 py-16 text-center text-white relative">
+                <h1 class="text-4xl font-bold mb-4">Galeri Prestasi</h1>
+                <p class="text-gray-300 mb-4">Bukti nyata keunggulan siswa-siswi SPEMDA di berbagai bidang.</p>
+                <button onclick="openModal('Prestasi')" class="admin-only bg-green-500 text-white px-5 py-2.5 rounded-lg text-sm hover:bg-green-600 mx-auto font-bold shadow-lg transition"><i class="fas fa-plus"></i> Tambah Data Prestasi</button>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <!-- Filter Kategori Prestasi -->
+                <div class="flex flex-wrap justify-center gap-3 mb-12">
+                    <button onclick="filterPrestasi('Semua', this)" class="filter-btn-prestasi active px-6 py-2 bg-white border border-gray-300 rounded-full font-medium transition hover:shadow-md">Semua Prestasi</button>
+                    <button onclick="filterPrestasi('Akademik', this)" class="filter-btn-prestasi px-6 py-2 bg-white text-gray-600 border border-gray-300 rounded-full font-medium transition hover:shadow-md">Akademik</button>
+                    <button onclick="filterPrestasi('Non-Akademik', this)" class="filter-btn-prestasi px-6 py-2 bg-white text-gray-600 border border-gray-300 rounded-full font-medium transition hover:shadow-md">Non-Akademik</button>
+                </div>
+                
+                <div id="prestasi-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Loaded via JS -->
+                    <div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== KESISWAAN & EKSKUL ==================== -->
+        <div id="view-ekskul" class="view-section hidden">
+            <div class="bg-muda-900 py-16 text-center text-white">
+                <h1 class="text-4xl font-bold mb-4">Kesiswaan & Ekstrakurikuler</h1>
+                <p class="text-gray-300">Mengembangkan minat, bakat, dan jiwa kepemimpinan siswa.</p>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 py-16">
+                <!-- Info IPM -->
+                <div class="bg-white rounded-3xl overflow-hidden shadow-xl mb-20 flex flex-col md:flex-row border border-gray-100">
+                    <div class="md:w-5/12">
+                        <img id="edit-ipm-img" src="https://images.unsplash.com/photo-1529390079861-591de354faf5?q=80&w=800&auto=format&fit=crop" class="w-full h-64 md:h-full object-cover editable-img">
+                    </div>
+                    <div class="md:w-7/12 p-8 md:p-12 flex flex-col justify-center bg-blue-50/30">
+                        <span class="text-accent-500 font-bold tracking-wider text-sm uppercase mb-2">Organisasi Intra Sekolah</span>
+                        <h2 class="text-3xl font-bold text-muda-900 mb-4">Ikatan Pelajar Muhammadiyah (IPM)</h2>
+                        <div class="w-12 h-1 bg-accent-500 mb-6 rounded"></div>
+                        <p id="edit-ipm-desc" class="text-gray-600 mb-6 leading-relaxed editable">IPM Ranting SPEMDA adalah wadah utama pelatihan kepemimpinan bagi siswa. Melalui IPM, siswa belajar manajemen organisasi, berdakwah, mengembangkan kreativitas, serta mengadakan event sekolah yang bermanfaat.</p>
+                        <button onclick="nav('berita')" class="self-start text-white bg-muda-600 hover:bg-muda-700 font-medium px-6 py-2.5 rounded-full transition shadow">Lihat Kegiatan IPM &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- Ekstrakurikuler Grid -->
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-muda-900 mb-4">Pilihan Ekstrakurikuler</h2>
+                    <div class="w-20 h-1.5 bg-accent-500 mx-auto rounded"></div>
+                    <p class="admin-only text-sm text-red-500 mt-2 font-semibold">Klik gambar atau teks untuk mengedit Ekskul (hanya di Mode Admin).</p>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Ekskul Cards (Editable) -->
+                    <div class="group relative rounded-2xl overflow-hidden shadow-md aspect-square">
+                        <img id="edit-eks1-img" src="https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 editable-img">
+                        <div class="absolute inset-0 bg-gradient-to-t from-muda-900 via-muda-900/40 to-transparent opacity-80 pointer-events-none"></div>
+                        <div class="absolute inset-0 p-6 flex flex-col justify-end items-center text-center pointer-events-none">
+                            <h3 id="edit-eks1-title" class="text-white font-bold text-xl editable pointer-events-auto">Tapak Suci</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="group relative rounded-2xl overflow-hidden shadow-md aspect-square">
+                        <img id="edit-eks2-img" src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 editable-img">
+                        <div class="absolute inset-0 bg-gradient-to-t from-muda-900 via-muda-900/40 to-transparent opacity-80 pointer-events-none"></div>
+                        <div class="absolute inset-0 p-6 flex flex-col justify-end items-center text-center pointer-events-none">
+                            <h3 id="edit-eks2-title" class="text-white font-bold text-xl editable pointer-events-auto">Futsal</h3>
+                        </div>
+                    </div>
+
+                    <div class="group relative rounded-2xl overflow-hidden shadow-md aspect-square">
+                        <img id="edit-eks3-img" src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=500&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 editable-img">
+                        <div class="absolute inset-0 bg-gradient-to-t from-muda-900 via-muda-900/40 to-transparent opacity-80 pointer-events-none"></div>
+                        <div class="absolute inset-0 p-6 flex flex-col justify-end items-center text-center pointer-events-none">
+                            <h3 id="edit-eks3-title" class="text-white font-bold text-xl editable pointer-events-auto">Robotik</h3>
+                        </div>
+                    </div>
+
+                    <div class="group relative rounded-2xl overflow-hidden shadow-md aspect-square">
+                        <img id="edit-eks4-img" src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 editable-img">
+                        <div class="absolute inset-0 bg-gradient-to-t from-muda-900 via-muda-900/40 to-transparent opacity-80 pointer-events-none"></div>
+                        <div class="absolute inset-0 p-6 flex flex-col justify-end items-center text-center pointer-events-none">
+                            <h3 id="edit-eks4-title" class="text-white font-bold text-xl editable pointer-events-auto">Jurnalistik</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== FASILITAS ==================== -->
+        <div id="view-fasilitas" class="view-section hidden bg-gray-50">
+             <div class="bg-muda-900 py-16 text-center text-white">
+                <h1 class="text-4xl font-bold mb-4">Fasilitas Sekolah</h1>
+                <p class="text-gray-300">Sarana prasarana penunjang kenyamanan belajar dan beribadah siswa.</p>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 py-16 space-y-16">
+                <!-- Fasilitas Grid -->
+                <div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                            <img id="edit-fas1-img" src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&h=400&fit=crop" class="w-full h-56 object-cover editable-img">
+                            <div class="p-6">
+                                <h3 id="edit-fas1-title" class="font-bold text-lg text-gray-800 mb-2 editable">Ruang Kelas Ber-AC</h3>
+                                <p id="edit-fas1-desc" class="text-gray-500 text-sm editable">Nyaman, dilengkapi proyektor LCD dan akses internet untuk belajar interaktif.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                            <img id="edit-fas2-img" src="https://images.unsplash.com/photo-1571260899304-4250701120f6?w=600&h=400&fit=crop" class="w-full h-56 object-cover editable-img">
+                            <div class="p-6">
+                                <h3 id="edit-fas2-title" class="font-bold text-lg text-gray-800 mb-2 editable">Laboratorium Komputer</h3>
+                                <p id="edit-fas2-desc" class="text-gray-500 text-sm editable">PC spesifikasi modern untuk praktik TIK, Robotik, dan ujian berbasis komputer.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                            <img id="edit-fas3-img" src="https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=600&h=400&fit=crop" class="w-full h-56 object-cover editable-img">
+                            <div class="p-6">
+                                <h3 id="edit-fas3-title" class="font-bold text-lg text-gray-800 mb-2 editable">Masjid Sekolah</h3>
+                                <p id="edit-fas3-desc" class="text-gray-500 text-sm editable">Pusat kegiatan keagamaan, shalat berjamaah, dan praktik ibadah.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PPDB ==================== -->
+        <div id="view-ppdb" class="view-section hidden">
+            <div class="bg-gradient-to-r from-muda-900 to-muda-800 py-20 text-center text-white relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-accent-500 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-400 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 relative z-10">Penerimaan Peserta Didik Baru</h1>
+                <p id="edit-ppdb-ta" class="font-medium text-lg md:text-xl text-accent-400 relative z-10 editable">Tahun Ajaran 2024/2025</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto px-4 py-12 text-center -mt-10 relative z-20">
+                <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-100 mb-16">
+                    <span id="edit-ppdb-badge" class="bg-green-100 text-green-600 font-bold px-4 py-1.5 rounded-full text-sm mb-6 inline-block editable"><i class="fas fa-check-circle"></i> Gelombang 1 Dibuka</span>
+                    <h2 id="edit-ppdb-title" class="text-3xl font-bold text-gray-900 mb-4 editable">Mari Bergabung Bersama Kami!</h2>
+                    <p id="edit-ppdb-desc" class="text-gray-600 mb-10 text-lg editable">Wujudkan masa depan gemilang putra-putri Anda bersama SPEMDA. Kuota pendaftaran terbatas.</p>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <a id="link-form-ppdb" href="https://forms.gle/contoh" target="_blank" class="editable-link bg-accent-500 hover:bg-accent-600 text-white font-bold py-4 px-8 rounded-xl transition shadow-xl flex items-center justify-center gap-3 text-lg">
+                            <i class="fab fa-wpforms text-2xl"></i> Isi Formulir Pendaftaran
+                        </a>
+                        <a id="link-pdf-ppdb" href="#" target="_blank" class="editable-link bg-white hover:bg-gray-50 text-muda-900 font-bold py-4 px-8 rounded-xl transition border-2 border-muda-100 flex items-center justify-center gap-3 text-lg hover:border-muda-300">
+                            <i class="fas fa-file-pdf text-red-500 text-2xl"></i> Unduh Brosur PDF
+                        </a>
+                    </div>
+                </div>
+
+                <h3 class="text-3xl font-bold text-muda-900 mb-10">Alur Pendaftaran Online</h3>
+                <!-- Image Infografis Alur PPDB -->
+                <img id="edit-ppdb-alur" src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&h=400&auto=format&fit=crop" class="w-full rounded-2xl shadow-md border border-gray-200 editable-img mb-10 object-cover">
+            </div>
+        </div>
+
+        <!-- ==================== BERITA ==================== -->
+        <div id="view-berita" class="view-section hidden bg-gray-50">
+            <div class="bg-muda-900 py-16 text-center text-white relative">
+                <h1 class="text-4xl font-bold mb-4">Berita & Artikel</h1>
+                <p class="text-gray-300 mb-6">Update kegiatan, pengumuman resmi, dan karya tulis SPEMDA.</p>
+                <button onclick="openModal('Berita')" class="admin-only bg-green-500 text-white px-5 py-2.5 rounded-lg text-sm hover:bg-green-600 mx-auto font-bold shadow-lg transition"><i class="fas fa-plus"></i> Tambah Berita/Artikel</button>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <div class="flex justify-center gap-3 mb-10 flex-wrap">
+                    <button onclick="filterBerita('Semua', this)" class="filter-btn-berita active px-6 py-2 bg-white border border-gray-300 rounded-full font-medium hover:shadow-md transition">Semua</button>
+                    <button onclick="filterBerita('Berita Sekolah', this)" class="filter-btn-berita px-6 py-2 bg-white text-gray-600 border border-gray-300 rounded-full font-medium hover:shadow-md transition">Berita Sekolah</button>
+                    <button onclick="filterBerita('Pengumuman', this)" class="filter-btn-berita px-6 py-2 bg-white text-gray-600 border border-gray-300 rounded-full font-medium hover:shadow-md transition">Pengumuman</button>
+                    <button onclick="filterBerita('Karya Siswa', this)" class="filter-btn-berita px-6 py-2 bg-white text-gray-600 border border-gray-300 rounded-full font-medium hover:shadow-md transition">Karya Siswa</button>
+                </div>
+                
+                <div id="berita-page-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BERITA DETAIL -->
+        <div id="view-berita-detail" class="view-section hidden bg-white">
+            <div class="max-w-4xl mx-auto px-4 py-16">
+                <button onclick="nav('berita')" class="mb-8 text-muda-600 hover:text-muda-900 font-bold flex items-center gap-2 transition bg-muda-50 px-4 py-2 rounded-full w-max">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Daftar Berita
+                </button>
+                <div id="berita-detail-content" class="bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-gray-100"></div>
+            </div>
+        </div>
+
+        <!-- ==================== KONTAK ==================== -->
+        <div id="view-kontak" class="view-section hidden">
+            <div class="max-w-7xl mx-auto px-4 py-16">
+                <div class="text-center mb-16">
+                    <h1 class="text-4xl font-bold text-muda-900 mb-4">Hubungi Kami</h1>
+                    <div class="w-20 h-1.5 bg-accent-500 mx-auto rounded"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-gray-100">
+                        <h3 class="text-2xl font-bold mb-8 text-gray-800 border-b pb-4">Informasi Kontak</h3>
+                        <ul class="space-y-8 text-gray-600">
+                            <li class="flex items-start gap-5 group">
+                                <div class="w-12 h-12 bg-muda-50 text-muda-600 rounded-full flex items-center justify-center shrink-0"><i class="fas fa-map-marker-alt text-xl"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-lg">Alamat Sekolah</h4>
+                                    <p id="edit-kontak-alamat" class="mt-1 leading-relaxed editable">Jl. Pucang Anom No. 93, Kertajaya, Kec. Gubeng, Kota Surabaya, Jawa Timur 60282</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-5 group">
+                                <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center shrink-0"><i class="fab fa-whatsapp text-2xl"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-lg">Telepon / WhatsApp</h4>
+                                    <p id="edit-kontak-telp" class="mt-1 editable">(031) 123-4567</p>
+                                    <p id="edit-kontak-wa" class="text-green-600 font-semibold mt-1 editable">+62 812-3456-7890 (Chat WA)</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-5 group">
+                                <div class="w-12 h-12 bg-accent-50 text-accent-600 rounded-full flex items-center justify-center shrink-0"><i class="fas fa-envelope text-xl"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-lg">Email</h4>
+                                    <p id="edit-kontak-mail" class="text-muda-600 mt-1 editable">info@smpm2sby.sch.id</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="h-96 lg:h-auto bg-gray-200 rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                        <!-- URL iframe Embed map juga bisa di-edit (dengan click pada admin mode) -->
+                        <iframe id="edit-map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.6917631379373!2d112.7505!3d-7.2758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwMTYnMzIuOSJTIDExMsKwNDUnMDEuOCJF!5e0!3m2!1sen!2sid!4v1600000000000!5m2!1sen!2sid" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" class="editable-img"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== LOGIN ADMIN MODAL ==================== -->
+        <div id="login-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-muda-600 relative">
+                <button onclick="document.getElementById('login-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition"><i class="fas fa-times text-xl"></i></button>
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-muda-100 text-muda-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-lock"></i></div>
+                    <h2 class="text-2xl font-bold text-gray-900">Akses Admin</h2>
+                    <p class="text-sm text-gray-500 mt-2">Masuk untuk mode edit langsung (Inline CMS).</p>
+                </div>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="mb-5"><label class="block text-sm font-semibold text-gray-700 mb-2">Username</label><input type="text" id="username" class="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-300 focus:ring-2 focus:ring-muda-600 outline-none transition" required></div>
+                    <div class="mb-8"><label class="block text-sm font-semibold text-gray-700 mb-2">Password</label><input type="password" id="password" class="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-300 focus:ring-2 focus:ring-muda-600 outline-none transition" required></div>
+                    <button type="submit" id="btnLogin" class="w-full bg-muda-600 hover:bg-muda-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition w-full">Masuk Mode Edit</button>
+                    <div id="loginError" class="mt-4 p-3 bg-red-50 text-red-600 text-sm text-center hidden rounded-lg font-medium"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== CRUD MODAL FORMS ==================== -->
+        <div id="crud-modal" class="fixed inset-0 bg-gray-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-2xl relative my-auto">
+                <button onclick="document.getElementById('crud-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-800 transition"><i class="fas fa-times text-xl"></i></button>
+                <h3 id="modal-title" class="font-bold text-2xl mb-6 text-muda-900 border-b pb-4">Tambah Data Baru</h3>
+                
+                <!-- Container form dinamis -->
+                <div id="modal-form-container"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER LENGKAP & EDITABLE -->
+    <footer class="bg-muda-900 text-white pt-16 pb-6 border-t-4 border-accent-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12 border-b border-muda-800 pb-12">
+                <!-- Kolom 1: Profil & Sosmed -->
+                <div class="md:col-span-2 pr-0 md:pr-8">
+                    <h3 class="font-bold text-2xl mb-4 flex items-center gap-3">
+                        <img id="edit-footer-logo" src="https://image2url.com/r2/default/images/1774449709726-4374bfeb-e350-4bc6-b05e-32bfcc5d22e4.png" alt="Logo SPEMDA" class="w-10 h-10 object-cover rounded-full bg-white p-0.5 editable-img">
+                        <span id="edit-footer-brand" class="editable">SPEMDA</span>
+                    </h3>
+                    <p id="edit-footer-desc" class="text-gray-400 text-sm leading-relaxed mb-6 editable">Sekolah Menengah Pertama Muhammadiyah 2 Surabaya. Memadukan pendidikan ilmu pengetahuan dan teknologi dengan nilai-nilai akidah Islam untuk melahirkan generasi yang berkemajuan.</p>
+                    <div class="flex gap-4">
+                        <a href="#" id="edit-footer-fb" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent-500 transition editable-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" id="edit-footer-ig" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent-500 transition editable-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" id="edit-footer-yt" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent-500 transition editable-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <!-- Kolom 2: Tautan Cepat -->
+                <div>
+                    <h3 id="edit-footer-title1" class="font-bold text-lg mb-6 text-white border-b border-muda-800 pb-2 inline-block editable">Tautan Cepat</h3>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" onclick="nav('ppdb')" class="hover:text-accent-400 transition flex items-center gap-2"><i class="fas fa-angle-right"></i> Info Pendaftaran</a></li>
+                        <li><a href="#" onclick="nav('profil')" class="hover:text-accent-400 transition flex items-center gap-2"><i class="fas fa-angle-right"></i> Profil Sekolah</a></li>
+                        <li><a href="#" onclick="nav('prestasi')" class="hover:text-accent-400 transition flex items-center gap-2"><i class="fas fa-angle-right"></i> Galeri Prestasi</a></li>
+                        <li><a href="#" onclick="nav('berita')" class="hover:text-accent-400 transition flex items-center gap-2"><i class="fas fa-angle-right"></i> Berita Terbaru</a></li>
+                    </ul>
+                </div>
+
+                <!-- Kolom 3: Kontak -->
+                <div>
+                    <h3 id="edit-footer-title2" class="font-bold text-lg mb-6 text-white border-b border-muda-800 pb-2 inline-block editable">Hubungi Kami</h3>
+                    <ul class="space-y-4 text-sm text-gray-400">
+                        <li class="flex items-start gap-3"><i class="fas fa-map-marker-alt mt-1 text-accent-400"></i> <span id="edit-footer-addr" class="editable">Jl. Pucang Anom 93, Kertajaya, Surabaya</span></li>
+                        <li class="flex items-center gap-3"><i class="fas fa-phone text-accent-400"></i> <span id="edit-footer-phone" class="editable">(031) 123-4567</span></li>
+                        <li class="flex items-center gap-3"><i class="fab fa-whatsapp text-accent-400"></i> <span id="edit-footer-wa" class="editable">0812-3456-7890</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 gap-4">
+                <p id="edit-footer-copy" class="editable">&copy; 2024 SMP Muhammadiyah 2 Surabaya. Hak Cipta Dilindungi.</p>
+                
+                <!-- TOMBOL ADMIN AKSES -->
+                <button onclick="document.getElementById('login-modal').classList.remove('hidden')" class="hover:text-white transition flex items-center gap-2 group bg-muda-800 px-4 py-2 rounded-full cursor-pointer border border-muda-700">
+                    <i class="fas fa-user-cog text-accent-400"></i> <span class="text-sm font-medium">Developer Access</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== JAVASCRIPT APP LOGIC ==================== -->
+    <script>
+        // MASUKKAN URL GOOGLE SCRIPT ANDA DI BAWAH INI
+        const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyDaw8AcZvoIkvjM76Fd40AID0oa7D1J0MkkTzxWFCMDgW7yOw0N8cSGIyIuo-G5kjUgA/exec'; 
+        
+        let appData = { berita: [], guru: [], prestasi: [] };
+        let isAdmin = false;
+
+        // Dummy Data untuk fallback (saat offline/URL API salah)
+        const dummyData = {
+            berita: [
+                {id: 1, judul: "Tim Robotik SPEMDA Juara 1 Tingkat Nasional di UGM", kategori: "Prestasi", konten: "Alhamdulillah tim kebanggaan...", gambar: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=600&h=400&fit=crop", tanggal: "20 Okt 2024"},
+                {id: 2, judul: "Kunjungan Studi Tiru SMP Muhammadiyah Malang", kategori: "Berita Sekolah", konten: "Menerima kunjungan dari...", gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&h=400&fit=crop", tanggal: "05 Okt 2024"}
+            ],
+            guru: [
+                {id:1, nama: "Ahmad Dahlan, M.Pd", jabatan: "Guru Kemuhammadiyahan", gambar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop"},
+                {id:2, nama: "Siti Aisyah, S.Pd", jabatan: "Guru Bahasa Inggris", gambar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+            ],
+            prestasi: [
+                {id:1, judul: "Medali Emas Olimpiade Sains (OSN) 2024", kategori: "Akademik", gambar: "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=600&h=600&fit=crop", tanggal: "1 Sep 2024"},
+                {id:2, judul: "Juara 1 Turnamen Futsal se-Surabaya", kategori: "Non-Akademik", gambar: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600&h=600&fit=crop", tanggal: "20 Agu 2024"}
+            ]
+        };
+
+        window.onload = () => {
+            checkAdminStatus();
+            nav('home');
+            fetchData();
+            setupImageLinkEditors();
+        };
+
+        // ========== SISTEM ROUTING ==========
+        function nav(viewId) {
+            document.getElementById('mobile-menu').classList.add('hidden');
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('text-muda-600', 'font-bold');
+                el.classList.add('text-gray-600');
+            });
+
+            const targetView = document.getElementById('view-' + viewId);
+            if(targetView) {
+                targetView.classList.remove('hidden');
+                let activeNavId = viewId === 'berita-detail' ? 'berita' : viewId;
+                const activeLink = document.querySelector(`.nav-link[onclick="nav('${activeNavId}')"]`);
+                if(activeLink) {
+                    activeLink.classList.remove('text-gray-600');
+                    activeLink.classList.add('text-muda-600', 'font-bold');
+                }
+            }
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // ========== AUTH & INLINE ADMIN ==========
+        function checkAdminStatus() {
+            isAdmin = !!localStorage.getItem('spemdaAdminToken');
+            if(isAdmin) {
+                document.body.classList.add('admin-mode');
+                // Mengaktifkan fitur "Bisa Diketik Langsung"
+                document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
+            } else {
+                document.body.classList.remove('admin-mode');
+                document.querySelectorAll('.editable').forEach(el => el.removeAttribute('contenteditable'));
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('loginError');
+
+            // Default login sementara (Hardcoded untuk fallback cepat)
+            if(u === 'Mud4Gembir4' && p === 'Spemd41234') {
+                localStorage.setItem('spemdaAdminToken', 'valid_token');
+                document.getElementById('login-modal').classList.add('hidden');
+                checkAdminStatus();
+                // Render ulang grid agar tombol Hapus (Trash) muncul
+                renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
+                e.target.reset();
+                alert("Berhasil masuk ke Mode Edit!");
+                return;
+            }
+            err.innerHTML = "Username / Password Salah!";
+            err.classList.remove('hidden');
+        }
+
+        function logoutAdmin() { 
+            if(confirm("Keluar dari Mode Edit Admin?")) {
+                localStorage.removeItem('spemdaAdminToken'); 
+                checkAdminStatus();
+                // Render ulang grid agar tombol Hapus (Trash) menghilang
+                renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
+            }
+        }
+
+        // ========== STATIC CONTENT STORAGE (DATABASE API) ==========
+        async function saveStaticEdits(event) {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            const edits = {};
+            // Mengambil semua nilai editan dari layar (teks, src gambar, href link)
+            document.querySelectorAll('.editable').forEach(el => { if(el.id) edits[el.id] = el.innerHTML; });
+            document.querySelectorAll('.editable-img').forEach(el => { if(el.id) edits[el.id] = el.src; });
+            document.querySelectorAll('.editable-link').forEach(el => { if(el.id) edits[el.id] = el.href; });
+            
+            // Backup ke localStorage sebagai cadangan perlindungan
+            localStorage.setItem('spemda_static_content', JSON.stringify(edits));
+
+            try {
+                if(!APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
+                    const payload = { action: 'saveSettings', edits: edits };
+                    const res = await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const result = await res.json();
+                    
+                    if(result.status === 'success') {
+                        alert("Berhasil! Semua perubahan teks, gambar, dan link telah tersimpan permanen ke Database (Google Sheet 'Pengaturan').");
+                    } else {
+                        alert("Gagal menyimpan ke database: " + result.message);
+                    }
+                } else {
+                    alert("Berhasil disimpan sementara di browser (Local Storage)! \n\nSilakan masukkan link URL Google Apps Script yang sah pada variabel APP_SCRIPT_URL di dalam source code agar data dapat dikirim ke spreadsheet secara permanen.");
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Koneksi gagal saat mengirim data ke server database.");
+            }
+
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+
+        function setupImageLinkEditors() {
+            // Edit Image Url
+            document.querySelectorAll('.editable-img').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if(!isAdmin) return;
+                    e.preventDefault();
+                    const newUrl = prompt("Masukkan URL Gambar baru (Upload dulu ke Imgur/Google Drive publik):", el.src);
+                    if(newUrl && newUrl.trim() !== '') el.src = newUrl;
+                });
+            });
+
+            // Edit Link Url
+            document.querySelectorAll('.editable-link').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if(!isAdmin) return;
+                    e.preventDefault();
+                    const newUrl = prompt("Masukkan Link URL yang baru (awali dengan https://):", el.href);
+                    if(newUrl && newUrl.trim() !== '') el.href = newUrl;
+                });
+            });
+        }
+
+        // ========== FETCH & RENDER DATA DINAMIS & STATIS ==========
+        async function fetchData() {
+            try {
+                if(APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) throw new Error("API belum dikonfigurasi");
+                const res = await fetch(APP_SCRIPT_URL + '?action=getAllData');
+                appData = await res.json();
+
+                // 1. Terapkan Data Statis dari Database Sheet "Pengaturan"
+                if(appData.pengaturan) {
+                    for (const [id, value] of Object.entries(appData.pengaturan)) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
+                            else if (el.tagName === 'A') el.href = value;
+                            else el.innerHTML = value;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("API Gagal, memuat dummy data atau local storage fallback.");
+                appData = dummyData; 
+                
+                // Fallback Load static teks/gambar dari LocalStorage browser jika offline
+                const saved = JSON.parse(localStorage.getItem('spemda_static_content') || '{}');
+                for (const [id, value] of Object.entries(saved)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
+                        else if (el.tagName === 'A') el.href = value;
+                        else el.innerHTML = value;
+                    }
+                }
+            }
+            
+            // 2. Terapkan Data Dinamis untuk Grid List
+            renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
+        }
+
+        function getDeleteBtn(id, type) {
+            if(!isAdmin) return '';
+            return `<button onclick="hapusData(event, '${id}', '${type}')" class="absolute top-3 right-3 bg-red-500 text-white w-8 h-8 rounded-full shadow-lg hover:bg-red-600 flex items-center justify-center z-20 transition" title="Hapus Data"><i class="fas fa-trash-alt text-sm"></i></button>`;
+        }
+
+        function renderHomeBerita() {
+            const container = document.getElementById('home-berita-grid'); container.innerHTML = '';
+            appData.berita.slice(0,3).forEach(b => {
+                const img = b.gambar || 'https://via.placeholder.com/600';
+                container.innerHTML += `
+                    <div class="relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition border border-gray-100 flex flex-col sm:flex-row group cursor-pointer" onclick="bacaBerita('${b.id}')">
+                        ${getDeleteBtn(b.id, 'Berita')}
+                        <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden rounded-t-2xl sm:rounded-tr-none sm:rounded-l-2xl"><img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"></div>
+                        <div class="p-6 sm:w-3/5 flex flex-col justify-center">
+                            <div class="flex items-center gap-2 mb-2"><span class="text-xs font-bold text-muda-900 bg-muda-50 px-2 py-1 rounded">${b.kategori}</span><span class="text-xs text-gray-400">${b.tanggal}</span></div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2">${b.judul}</h3>
+                            <span class="mt-2 text-accent-500 text-sm font-semibold group-hover:text-accent-600 transition">Baca Selengkapnya &rarr;</span>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function renderHomePrestasi() {
+            const container = document.getElementById('home-prestasi-grid'); container.innerHTML = '';
+            appData.prestasi.slice(0,4).forEach(p => {
+                const img = p.gambar || 'https://via.placeholder.com/500';
+                container.innerHTML += `
+                    <div class="relative bg-white rounded-2xl overflow-hidden shadow-sm group border border-gray-100 aspect-square">
+                        ${getDeleteBtn(p.id, 'Prestasi')}
+                        <img src="${img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-muda-900/90 via-muda-900/30 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-4 pointer-events-none">
+                            <h3 class="text-white font-bold text-sm leading-tight">${p.judul}</h3>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function renderGuru() {
+            const container = document.getElementById('guru-grid'); if(!container) return; container.innerHTML = '';
+            appData.guru.forEach(g => {
+                const img = g.gambar || `https://ui-avatars.com/api/?name=${encodeURI(g.nama)}&background=1e3a8a&color=fff&size=200`;
+                container.innerHTML += `
+                    <div class="relative bg-white rounded-2xl shadow-sm p-5 text-center border border-gray-100 hover:-translate-y-1 transition duration-300">
+                        ${getDeleteBtn(g.id, 'Guru')}
+                        <img src="${img}" class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-gray-50 shadow-sm">
+                        <h4 class="font-bold text-sm text-gray-800 line-clamp-1" title="${g.nama}">${g.nama}</h4>
+                        <p class="text-xs text-muda-600 font-medium mt-1">${g.jabatan}</p>
+                    </div>`;
+            });
+        }
+
+        function filterBerita(filter, btnEl) {
+            document.querySelectorAll('.filter-btn-berita').forEach(el => el.classList.remove('active', 'bg-muda-900', 'text-white'));
+            if(btnEl) { btnEl.classList.add('active', 'bg-muda-900', 'text-white'); btnEl.classList.remove('text-gray-600'); }
+            renderBeritaPage(filter);
+        }
+
+        function renderBeritaPage(filter) {
+            const container = document.getElementById('berita-page-grid'); if(!container) return; container.innerHTML = '';
+            const data = filter === 'Semua' ? appData.berita : appData.berita.filter(b => b.kategori === filter);
+            if(data.length === 0) { container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">Belum ada berita.</div>`; return; }
+
+            data.forEach(b => {
+                const img = b.gambar || 'https://via.placeholder.com/600';
+                container.innerHTML += `
+                    <div class="relative bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 flex flex-col hover:-translate-y-1 transition cursor-pointer group" onclick="bacaBerita('${b.id}')">
+                        ${getDeleteBtn(b.id, 'Berita')}
+                        <div class="h-48 overflow-hidden"><img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"></div>
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-muda-900 bg-muda-50 px-2 py-1 rounded">${b.kategori}</span><span class="text-xs text-gray-400">${b.tanggal}</span></div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2">${b.judul}</h3>
+                            <span class="mt-auto pt-4 text-accent-500 text-sm font-semibold group-hover:text-accent-600 transition">Baca Artikel &rarr;</span>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function bacaBerita(id) {
+            const b = appData.berita.find(x => x.id == id); if (!b) return;
+            const container = document.getElementById('berita-detail-content');
+            container.innerHTML = `
+                <div class="text-center mb-8">
+                    <span class="bg-accent-100 text-accent-600 font-bold px-4 py-1.5 rounded-full text-sm inline-block mb-4 shadow-sm">${b.kategori}</span>
+                    <h1 class="text-3xl md:text-5xl font-bold text-muda-900 mb-6 leading-tight">${b.judul}</h1>
+                    <p class="text-gray-500 font-medium"><i class="far fa-calendar-alt"></i> Dipublikasikan: ${b.tanggal}</p>
+                </div>
+                <div class="rounded-2xl overflow-hidden mb-10 shadow-md border border-gray-100 bg-gray-50 flex justify-center items-center">
+                    <img src="${b.gambar||'https://via.placeholder.com/800'}" class="w-full max-h-[500px] object-cover">
+                </div>
+                <div class="prose max-w-none text-gray-700 leading-relaxed text-lg text-justify font-normal">${b.konten.replace(/\n/g, '<br><br>')}</div>
+            `;
+            nav('berita-detail');
+        }
+
+        function filterPrestasi(filter, btnEl) {
+            document.querySelectorAll('.filter-btn-prestasi').forEach(el => el.classList.remove('active', 'bg-muda-900', 'text-white'));
+            if(btnEl) { btnEl.classList.add('active', 'bg-muda-900', 'text-white'); btnEl.classList.remove('text-gray-600'); }
+            renderPrestasiPage(filter);
+        }
+
+        function renderPrestasiPage(filter) {
+            const container = document.getElementById('prestasi-grid'); if(!container) return; container.innerHTML = '';
+            const data = filter === 'Semua' ? appData.prestasi : appData.prestasi.filter(p => p.kategori === filter);
+            if(data.length === 0) { container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">Belum ada prestasi.</div>`; return; }
+
+            data.forEach(p => {
+                const img = p.gambar || 'https://via.placeholder.com/600';
+                container.innerHTML += `
+                    <div class="relative bg-white rounded-3xl overflow-hidden shadow-lg group border border-gray-100">
+                        ${getDeleteBtn(p.id, 'Prestasi')}
+                        <div class="aspect-[4/3] overflow-hidden bg-gray-100"><img src="${img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-muda-900 via-muda-900/50 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-6 pointer-events-none">
+                            <span class="bg-accent-500 text-white text-xs font-bold px-3 py-1 rounded-full w-max mb-3 shadow-sm">${p.kategori}</span>
+                            <h3 class="text-white font-bold text-xl mb-1">${p.judul}</h3>
+                            <p class="text-gray-300 text-sm"><i class="far fa-calendar-alt"></i> ${p.tanggal}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // ========== CRUD FORM MODAL ==========
+        function openModal(type) {
+            const container = document.getElementById('modal-form-container');
+            document.getElementById('modal-title').innerText = "Tambah Data " + type;
+            
+            let formHTML = `<form onsubmit="simpanData(event, '${type}')"><div class="space-y-4 mb-6">`;
+            
+            if(type === 'Berita') {
+                formHTML += `
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Judul Artikel</label><input type="text" id="inp_judul" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategori</label><select id="inp_kategori" class="w-full border p-3 rounded-xl border-gray-300"><option>Berita Sekolah</option><option>Pengumuman</option><option>Karya Siswa</option></select></div>
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Gambar (Opsional)</label><input type="url" id="inp_gambar" placeholder="https://" class="w-full border p-3 rounded-xl border-gray-300"></div>
+                    </div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Isi Konten</label><textarea id="inp_konten" rows="5" required class="w-full border p-3 rounded-xl outline-none border-gray-300"></textarea></div>`;
+            } else if(type === 'Prestasi') {
+                formHTML += `
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Nama Prestasi</label><input type="text" id="inp_judul" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategori</label><select id="inp_kategori" class="w-full border p-3 rounded-xl border-gray-300"><option>Akademik</option><option>Non-Akademik</option></select></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Foto Piala/Sertifikat</label><input type="url" id="inp_gambar" required class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>`;
+            } else if(type === 'Guru') {
+                formHTML += `
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap & Gelar</label><input type="text" id="inp_nama" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Jabatan / Mapel</label><input type="text" id="inp_jabatan" required placeholder="Contoh: Guru Matematika" class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Foto Wajah (Square)</label><input type="url" id="inp_gambar" placeholder="https://" class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>`;
+            }
+            
+            formHTML += `</div><button type="submit" id="btnSubmitModal" class="w-full bg-muda-600 hover:bg-muda-700 text-white font-bold py-3.5 rounded-xl transition shadow text-lg">Simpan ke Database</button></form>`;
+            
+            container.innerHTML = formHTML;
+            document.getElementById('crud-modal').classList.remove('hidden');
+        }
+
+        async function simpanData(e, sheetName) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitModal');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
+
+            let payload = { action: 'addData', sheetName: sheetName };
+            if(sheetName === 'Berita') { payload.judul = document.getElementById('inp_judul').value; payload.kategori = document.getElementById('inp_kategori').value; payload.gambar = document.getElementById('inp_gambar').value; payload.konten = document.getElementById('inp_konten').value; }
+            else if(sheetName === 'Prestasi') { payload.judul = document.getElementById('inp_judul').value; payload.kategori = document.getElementById('inp_kategori').value; payload.gambar = document.getElementById('inp_gambar').value; }
+            else if(sheetName === 'Guru') { payload.nama = document.getElementById('inp_nama').value; payload.jabatan = document.getElementById('inp_jabatan').value; payload.gambar = document.getElementById('inp_gambar').value; }
+
+            try {
+                if(!APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
+                    await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    await fetchData();
+                } else {
+                    payload.id = Date.now().toString(); payload.tanggal = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                    if(sheetName==='Berita') appData.berita.unshift(payload);
+                    if(sheetName==='Prestasi') appData.prestasi.unshift(payload);
+                    if(sheetName==='Guru') appData.guru.unshift(payload);
+                }
+                document.getElementById('crud-modal').classList.add('hidden');
+                renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
+                alert("Data berhasil ditambahkan!");
+            } catch(err) { alert("Gagal menyimpan data."); }
+            
+            btn.innerHTML = 'Simpan ke Database'; btn.disabled = false;
+        }
+
+        async function hapusData(e, id, sheetName) {
+            e.stopPropagation(); // Mencegah klik masuk ke kartu berita
+            if(!confirm(`Yakin hapus data ${sheetName} ini permanen dari database?`)) return;
+            
+            const btn = e.currentTarget;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                if(!APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
+                    await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteData', sheetName: sheetName, id: id }) });
+                    await fetchData();
+                } else {
+                    if(sheetName==='Berita') appData.berita = appData.berita.filter(x => x.id != id);
+                    if(sheetName==='Prestasi') appData.prestasi = appData.prestasi.filter(x => x.id != id);
+                    if(sheetName==='Guru') appData.guru = appData.guru.filter(x => x.id != id);
+                }
+                renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
+            } catch(e) { alert("Gagal menghapus data."); }
+        }
+    </script>
+</body>
+</html>
