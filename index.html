@@ -751,10 +751,8 @@
                 if(appData.pengaturan) {
                     for (const [id, value] of Object.entries(appData.pengaturan)) {
                         const el = document.getElementById(id);
-                        if (el) {
-                            if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
-                            else if (el.tagName === 'A') el.href = value;
-                            else el.innerHTML = value;
+                        if (el.tagName === 'IMG' || el.tagName === 'IFRAME') {
+                            if(value && value.trim() !== '') el.src = value; // Hanya overwrite jika data dari DB ada isinya
                         }
                     }
                 }
@@ -766,10 +764,8 @@
                 const saved = JSON.parse(localStorage.getItem('spemda_static_content') || '{}');
                 for (const [id, value] of Object.entries(saved)) {
                     const el = document.getElementById(id);
-                    if (el) {
-                        if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
-                        else if (el.tagName === 'A') el.href = value;
-                        else el.innerHTML = value;
+                    if (el.tagName === 'IMG' || el.tagName === 'IFRAME') {
+                        if(value && value.trim() !== '') el.src = value; // Hanya overwrite jika data dari DB ada isinya
                     }
                 }
             }
