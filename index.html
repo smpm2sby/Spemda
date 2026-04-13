@@ -451,7 +451,7 @@
                 <button onclick="nav('berita')" class="mb-8 text-muda-600 hover:text-muda-900 font-bold flex items-center gap-2 transition bg-muda-50 px-4 py-2 rounded-full w-max">
                     <i class="fas fa-arrow-left"></i> Kembali ke Daftar Berita
                 </button>
-                <div id="berita-detail-content" class="bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-gray-100"></div>
+                <div id="berita-detail-content" class="bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-gray-100 relative"></div>
             </div>
         </div>
 
@@ -585,7 +585,7 @@
     <!-- ==================== JAVASCRIPT APP LOGIC ==================== -->
     <script>
         // MASUKKAN URL GOOGLE SCRIPT ANDA DI BAWAH INI
-        const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyDaw8AcZvoIkvjM76Fd40AID0oa7D1J0MkkTzxWFCMDgW7yOw0N8cSGIyIuo-G5kjUgA/exec'; 
+        const APP_SCRIPT_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA'; 
         
         let appData = { berita: [], guru: [], prestasi: [] };
         let isAdmin = false;
@@ -593,8 +593,8 @@
         // Dummy Data untuk fallback (saat offline/URL API salah)
         const dummyData = {
             berita: [
-                {id: 1, judul: "Tim Robotik SPEMDA Juara 1 Tingkat Nasional di UGM", kategori: "Prestasi", konten: "Alhamdulillah tim kebanggaan...", gambar: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=600&h=400&fit=crop", tanggal: "20 Okt 2024"},
-                {id: 2, judul: "Kunjungan Studi Tiru SMP Muhammadiyah Malang", kategori: "Berita Sekolah", konten: "Menerima kunjungan dari...", gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&h=400&fit=crop", tanggal: "05 Okt 2024"}
+                {id: 1, judul: "Tim Robotik SPEMDA Juara 1 Tingkat Nasional di UGM", kategori: "Prestasi", konten: "Alhamdulillah tim kebanggaan sekolah berhasil memenangkan juara 1...", gambar: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=600&h=400&fit=crop", tanggal: "20 Okt 2024"},
+                {id: 2, judul: "Kunjungan Studi Tiru SMP Muhammadiyah Malang", kategori: "Berita Sekolah", konten: "Menerima kunjungan dari saudara seperjuangan...", gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&h=400&fit=crop", tanggal: "05 Okt 2024"}
             ],
             guru: [
                 {id:1, nama: "Ahmad Dahlan, M.Pd", jabatan: "Guru Kemuhammadiyahan", gambar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop"},
@@ -641,7 +641,6 @@
             isAdmin = !!localStorage.getItem('spemdaAdminToken');
             if(isAdmin) {
                 document.body.classList.add('admin-mode');
-                // Mengaktifkan fitur "Bisa Diketik Langsung"
                 document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
             } else {
                 document.body.classList.remove('admin-mode');
@@ -655,12 +654,10 @@
             const p = document.getElementById('password').value;
             const err = document.getElementById('loginError');
 
-            // Default login sementara (Hardcoded untuk fallback cepat)
             if(u === 'Mud4Gembir4' && p === 'Spemd41234') {
                 localStorage.setItem('spemdaAdminToken', 'valid_token');
                 document.getElementById('login-modal').classList.add('hidden');
                 checkAdminStatus();
-                // Render ulang grid agar tombol Hapus (Trash) muncul
                 renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
                 e.target.reset();
                 alert("Berhasil masuk ke Mode Edit!");
@@ -674,12 +671,10 @@
             if(confirm("Keluar dari Mode Edit Admin?")) {
                 localStorage.removeItem('spemdaAdminToken'); 
                 checkAdminStatus();
-                // Render ulang grid agar tombol Hapus (Trash) menghilang
                 renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
             }
         }
 
-        // ========== STATIC CONTENT STORAGE (DATABASE API) ==========
         async function saveStaticEdits(event) {
             const btn = event.currentTarget;
             const originalHTML = btn.innerHTML;
@@ -687,12 +682,10 @@
             btn.disabled = true;
 
             const edits = {};
-            // Mengambil semua nilai editan dari layar (teks, src gambar, href link)
             document.querySelectorAll('.editable').forEach(el => { if(el.id) edits[el.id] = el.innerHTML; });
             document.querySelectorAll('.editable-img').forEach(el => { if(el.id) edits[el.id] = el.src; });
             document.querySelectorAll('.editable-link').forEach(el => { if(el.id) edits[el.id] = el.href; });
             
-            // Backup ke localStorage sebagai cadangan perlindungan
             localStorage.setItem('spemda_static_content', JSON.stringify(edits));
 
             try {
@@ -700,41 +693,32 @@
                     const payload = { action: 'saveSettings', edits: edits };
                     const res = await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const result = await res.json();
-                    
-                    if(result.status === 'success') {
-                        alert("Berhasil! Semua perubahan teks, gambar, dan link telah tersimpan permanen ke Database (Google Sheet 'Pengaturan').");
-                    } else {
-                        alert("Gagal menyimpan ke database: " + result.message);
-                    }
+                    if(result.status === 'success') alert("Berhasil! Perubahan disimpan ke Database.");
+                    else alert("Gagal menyimpan: " + result.message);
                 } else {
-                    alert("Berhasil disimpan sementara di browser (Local Storage)! \n\nSilakan masukkan link URL Google Apps Script yang sah pada variabel APP_SCRIPT_URL di dalam source code agar data dapat dikirim ke spreadsheet secara permanen.");
+                    alert("Tersimpan di Local Storage browser (Simulasi).\n(Silakan Update variabel APP_SCRIPT_URL pada baris paling bawah kode)");
                 }
-            } catch(e) {
-                console.error(e);
-                alert("Koneksi gagal saat mengirim data ke server database.");
-            }
+            } catch(e) { alert("Koneksi gagal."); }
 
             btn.innerHTML = originalHTML;
             btn.disabled = false;
         }
 
         function setupImageLinkEditors() {
-            // Edit Image Url
             document.querySelectorAll('.editable-img').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if(!isAdmin) return;
                     e.preventDefault();
-                    const newUrl = prompt("Masukkan URL Gambar baru (Upload dulu ke Imgur/Google Drive publik):", el.src);
+                    const newUrl = prompt("Masukkan URL Gambar baru:", el.src);
                     if(newUrl && newUrl.trim() !== '') el.src = newUrl;
                 });
             });
 
-            // Edit Link Url
             document.querySelectorAll('.editable-link').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if(!isAdmin) return;
                     e.preventDefault();
-                    const newUrl = prompt("Masukkan Link URL yang baru (awali dengan https://):", el.href);
+                    const newUrl = prompt("Masukkan Link URL yang baru:", el.href);
                     if(newUrl && newUrl.trim() !== '') el.href = newUrl;
                 });
             });
@@ -747,17 +731,10 @@
                 const res = await fetch(APP_SCRIPT_URL + '?action=getAllData');
                 appData = await res.json();
 
-                // 1. Terapkan Data Statis dari Database Sheet "Pengaturan"
                 if(appData.pengaturan) {
                     for (const [id, value] of Object.entries(appData.pengaturan)) {
                         const el = document.getElementById(id);
-                        
-                        // Perbaikan: Pastikan elemen 'el' ditemukan sebelum mengecek tagName
-                        if (!el) continue; 
-                        
-                        // Bypass: Jangan pernah me-replace gambar hero-bg dari database
-                        if (id === 'edit-hero-bg') continue;
-
+                        if (!el || id === 'edit-hero-bg') continue; 
                         if (value && value.toString().trim() !== '') {
                             if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
                             else if (el.tagName === 'A') el.href = value;
@@ -766,20 +743,11 @@
                     }
                 }
             } catch (err) {
-                console.warn("API Gagal, memuat dummy data atau local storage fallback.");
                 appData = dummyData; 
-                
-                // Fallback Load static teks/gambar dari LocalStorage browser jika offline
                 const saved = JSON.parse(localStorage.getItem('spemda_static_content') || '{}');
                 for (const [id, value] of Object.entries(saved)) {
                     const el = document.getElementById(id);
-                    
-                    // Perbaikan: Pastikan elemen 'el' ditemukan
-                    if (!el) continue; 
-                    
-                    // Bypass: Jangan pernah me-replace gambar hero-bg dari database/cache
-                    if (id === 'edit-hero-bg') continue;
-
+                    if (!el || id === 'edit-hero-bg') continue; 
                     if (value && value.toString().trim() !== '') {
                         if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
                         else if (el.tagName === 'A') el.href = value;
@@ -787,14 +755,20 @@
                     }
                 }
             }
-            
-            // 2. Terapkan Data Dinamis untuk Grid List
             renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
         }
 
-        function getDeleteBtn(id, type) {
+        // Fungsi Helper Untuk Tombol Aksi Admin (Edit & Delete)
+        function getAdminBtns(id, type) {
             if(!isAdmin) return '';
-            return `<button onclick="hapusData(event, '${id}', '${type}')" class="absolute top-3 right-3 bg-red-500 text-white w-8 h-8 rounded-full shadow-lg hover:bg-red-600 flex items-center justify-center z-20 transition" title="Hapus Data"><i class="fas fa-trash-alt text-sm"></i></button>`;
+            
+            let editBtn = '';
+            // Tombol edit saat ini diaktifkan untuk Berita, Guru, dan Prestasi
+            editBtn = `<button onclick="bukaEditModal(event, '${id}', '${type}')" class="bg-blue-500 text-white w-8 h-8 rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center transition" title="Edit Data"><i class="fas fa-pencil-alt text-sm"></i></button>`;
+            
+            let delBtn = `<button onclick="hapusData(event, '${id}', '${type}')" class="bg-red-500 text-white w-8 h-8 rounded-full shadow-lg hover:bg-red-600 flex items-center justify-center transition" title="Hapus Data"><i class="fas fa-trash-alt text-sm"></i></button>`;
+            
+            return `<div class="absolute top-3 right-3 flex gap-2 z-20">${editBtn}${delBtn}</div>`;
         }
 
         function renderHomeBerita() {
@@ -803,7 +777,7 @@
                 const img = b.gambar || 'https://via.placeholder.com/600';
                 container.innerHTML += `
                     <div class="relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition border border-gray-100 flex flex-col sm:flex-row group cursor-pointer" onclick="bacaBerita('${b.id}')">
-                        ${getDeleteBtn(b.id, 'Berita')}
+                        ${getAdminBtns(b.id, 'Berita')}
                         <div class="sm:w-2/5 h-48 sm:h-auto overflow-hidden rounded-t-2xl sm:rounded-tr-none sm:rounded-l-2xl"><img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"></div>
                         <div class="p-6 sm:w-3/5 flex flex-col justify-center">
                             <div class="flex items-center gap-2 mb-2"><span class="text-xs font-bold text-muda-900 bg-muda-50 px-2 py-1 rounded">${b.kategori}</span><span class="text-xs text-gray-400">${b.tanggal}</span></div>
@@ -820,7 +794,7 @@
                 const img = p.gambar || 'https://via.placeholder.com/500';
                 container.innerHTML += `
                     <div class="relative bg-white rounded-2xl overflow-hidden shadow-sm group border border-gray-100 aspect-square">
-                        ${getDeleteBtn(p.id, 'Prestasi')}
+                        ${getAdminBtns(p.id, 'Prestasi')}
                         <img src="${img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         <div class="absolute inset-0 bg-gradient-to-t from-muda-900/90 via-muda-900/30 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-4 pointer-events-none">
                             <h3 class="text-white font-bold text-sm leading-tight">${p.judul}</h3>
@@ -835,7 +809,7 @@
                 const img = g.gambar || `https://ui-avatars.com/api/?name=${encodeURI(g.nama)}&background=1e3a8a&color=fff&size=200`;
                 container.innerHTML += `
                     <div class="relative bg-white rounded-2xl shadow-sm p-5 text-center border border-gray-100 hover:-translate-y-1 transition duration-300">
-                        ${getDeleteBtn(g.id, 'Guru')}
+                        ${getAdminBtns(g.id, 'Guru')}
                         <img src="${img}" class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-gray-50 shadow-sm">
                         <h4 class="font-bold text-sm text-gray-800 line-clamp-1" title="${g.nama}">${g.nama}</h4>
                         <p class="text-xs text-muda-600 font-medium mt-1">${g.jabatan}</p>
@@ -858,7 +832,7 @@
                 const img = b.gambar || 'https://via.placeholder.com/600';
                 container.innerHTML += `
                     <div class="relative bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 flex flex-col hover:-translate-y-1 transition cursor-pointer group" onclick="bacaBerita('${b.id}')">
-                        ${getDeleteBtn(b.id, 'Berita')}
+                        ${getAdminBtns(b.id, 'Berita')}
                         <div class="h-48 overflow-hidden"><img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"></div>
                         <div class="p-6 flex-1 flex flex-col">
                             <div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-muda-900 bg-muda-50 px-2 py-1 rounded">${b.kategori}</span><span class="text-xs text-gray-400">${b.tanggal}</span></div>
@@ -872,8 +846,13 @@
         function bacaBerita(id) {
             const b = appData.berita.find(x => x.id == id); if (!b) return;
             const container = document.getElementById('berita-detail-content');
+            
+            // Tambahkan tombol edit di atas judul saat berada di dalam artikel (hanya untuk Admin)
+            const adminEditBtn = isAdmin ? `<button onclick="bukaEditModal(event, '${b.id}', 'Berita')" class="absolute top-6 right-6 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 flex items-center gap-2 transition z-10"><i class="fas fa-pencil-alt text-sm"></i> Edit Artikel</button>` : '';
+
             container.innerHTML = `
-                <div class="text-center mb-8">
+                ${adminEditBtn}
+                <div class="text-center mb-8 pt-4">
                     <span class="bg-accent-100 text-accent-600 font-bold px-4 py-1.5 rounded-full text-sm inline-block mb-4 shadow-sm">${b.kategori}</span>
                     <h1 class="text-3xl md:text-5xl font-bold text-muda-900 mb-6 leading-tight">${b.judul}</h1>
                     <p class="text-gray-500 font-medium"><i class="far fa-calendar-alt"></i> Dipublikasikan: ${b.tanggal}</p>
@@ -881,7 +860,7 @@
                 <div class="rounded-2xl overflow-hidden mb-10 shadow-md border border-gray-100 bg-gray-50 flex justify-center items-center">
                     <img src="${b.gambar||'https://via.placeholder.com/800'}" class="w-full max-h-[500px] object-cover">
                 </div>
-                <div class="prose max-w-none text-gray-700 leading-relaxed text-lg text-justify font-normal">${b.konten.replace(/\n/g, '<br><br>')}</div>
+                <div class="prose max-w-none text-gray-700 leading-relaxed text-lg text-justify font-normal">${(b.konten || '').replace(/\n/g, '<br><br>')}</div>
             `;
             nav('berita-detail');
         }
@@ -901,7 +880,7 @@
                 const img = p.gambar || 'https://via.placeholder.com/600';
                 container.innerHTML += `
                     <div class="relative bg-white rounded-3xl overflow-hidden shadow-lg group border border-gray-100">
-                        ${getDeleteBtn(p.id, 'Prestasi')}
+                        ${getAdminBtns(p.id, 'Prestasi')}
                         <div class="aspect-[4/3] overflow-hidden bg-gray-100"><img src="${img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-muda-900 via-muda-900/50 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-6 pointer-events-none">
                             <span class="bg-accent-500 text-white text-xs font-bold px-3 py-1 rounded-full w-max mb-3 shadow-sm">${p.kategori}</span>
@@ -913,33 +892,67 @@
         }
 
         // ========== CRUD FORM MODAL ==========
-        function openModal(type) {
+        function bukaEditModal(e, id, type) {
+            e.stopPropagation(); // Mencegah masuk ke halaman detail
+            openModal(type, id);
+        }
+
+        function openModal(type, editId = null) {
             const container = document.getElementById('modal-form-container');
-            document.getElementById('modal-title').innerText = "Tambah Data " + type;
+            const modalTitle = document.getElementById('modal-title');
             
-            let formHTML = `<form onsubmit="simpanData(event, '${type}')"><div class="space-y-4 mb-6">`;
+            modalTitle.innerText = (editId ? "Edit" : "Tambah") + " Data " + type;
+            
+            // Ambil data yang sudah ada jika sedang mode Edit
+            let existingData = {};
+            if(editId) {
+                if(type === 'Berita') existingData = appData.berita.find(x => x.id == editId) || {};
+                else if(type === 'Prestasi') existingData = appData.prestasi.find(x => x.id == editId) || {};
+                else if(type === 'Guru') existingData = appData.guru.find(x => x.id == editId) || {};
+            }
+            
+            let formHTML = `<form onsubmit="simpanData(event, '${type}')">
+                            <input type="hidden" id="inp_id" value="${editId || ''}">
+                            <div class="space-y-4 mb-6">`;
             
             if(type === 'Berita') {
                 formHTML += `
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Judul Artikel</label><input type="text" id="inp_judul" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Judul Artikel</label>
+                         <input type="text" id="inp_judul" value="${existingData.judul || ''}" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategori</label><select id="inp_kategori" class="w-full border p-3 rounded-xl border-gray-300"><option>Berita Sekolah</option><option>Pengumuman</option><option>Karya Siswa</option></select></div>
-                        <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Gambar (Opsional)</label><input type="url" id="inp_gambar" placeholder="https://" class="w-full border p-3 rounded-xl border-gray-300"></div>
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategori</label>
+                             <select id="inp_kategori" class="w-full border p-3 rounded-xl border-gray-300">
+                                <option ${existingData.kategori === 'Berita Sekolah' ? 'selected' : ''}>Berita Sekolah</option>
+                                <option ${existingData.kategori === 'Pengumuman' ? 'selected' : ''}>Pengumuman</option>
+                                <option ${existingData.kategori === 'Karya Siswa' ? 'selected' : ''}>Karya Siswa</option>
+                             </select></div>
+                        <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Gambar (Opsional)</label>
+                             <input type="url" id="inp_gambar" value="${existingData.gambar || ''}" placeholder="https://" class="w-full border p-3 rounded-xl border-gray-300"></div>
                     </div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Isi Konten</label><textarea id="inp_konten" rows="5" required class="w-full border p-3 rounded-xl outline-none border-gray-300"></textarea></div>`;
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Isi Konten</label>
+                         <textarea id="inp_konten" rows="5" required class="w-full border p-3 rounded-xl outline-none border-gray-300">${existingData.konten || ''}</textarea></div>`;
             } else if(type === 'Prestasi') {
                 formHTML += `
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Nama Prestasi</label><input type="text" id="inp_judul" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategori</label><select id="inp_kategori" class="w-full border p-3 rounded-xl border-gray-300"><option>Akademik</option><option>Non-Akademik</option></select></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Foto Piala/Sertifikat</label><input type="url" id="inp_gambar" required class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>`;
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Nama Prestasi</label>
+                         <input type="text" id="inp_judul" value="${existingData.judul || ''}" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Kategori</label>
+                         <select id="inp_kategori" class="w-full border p-3 rounded-xl border-gray-300">
+                            <option ${existingData.kategori === 'Akademik' ? 'selected' : ''}>Akademik</option>
+                            <option ${existingData.kategori === 'Non-Akademik' ? 'selected' : ''}>Non-Akademik</option>
+                         </select></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Foto Piala/Sertifikat</label>
+                         <input type="url" id="inp_gambar" value="${existingData.gambar || ''}" required class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>`;
             } else if(type === 'Guru') {
                 formHTML += `
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap & Gelar</label><input type="text" id="inp_nama" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Jabatan / Mapel</label><input type="text" id="inp_jabatan" required placeholder="Contoh: Guru Matematika" class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Foto Wajah (Square)</label><input type="url" id="inp_gambar" placeholder="https://" class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>`;
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap & Gelar</label>
+                         <input type="text" id="inp_nama" value="${existingData.nama || ''}" required class="w-full border p-3 rounded-xl focus:ring-2 outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">Jabatan / Mapel</label>
+                         <input type="text" id="inp_jabatan" value="${existingData.jabatan || ''}" required placeholder="Contoh: Guru Matematika" class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>
+                    <div><label class="block text-sm font-bold text-gray-700 mb-1">URL Foto Wajah (Square)</label>
+                         <input type="url" id="inp_gambar" value="${existingData.gambar || ''}" placeholder="https://" class="w-full border p-3 rounded-xl outline-none border-gray-300"></div>`;
             }
             
-            formHTML += `</div><button type="submit" id="btnSubmitModal" class="w-full bg-muda-600 hover:bg-muda-700 text-white font-bold py-3.5 rounded-xl transition shadow text-lg">Simpan ke Database</button></form>`;
+            formHTML += `</div><button type="submit" id="btnSubmitModal" class="w-full bg-muda-600 hover:bg-muda-700 text-white font-bold py-3.5 rounded-xl transition shadow text-lg">Simpan Perubahan</button></form>`;
             
             container.innerHTML = formHTML;
             document.getElementById('crud-modal').classList.remove('hidden');
@@ -950,7 +963,12 @@
             const btn = document.getElementById('btnSubmitModal');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
 
-            let payload = { action: 'addData', sheetName: sheetName };
+            const editId = document.getElementById('inp_id').value;
+            const actionType = editId ? 'updateData' : 'addData'; // Tentukan API action
+            
+            let payload = { action: actionType, sheetName: sheetName };
+            if(editId) payload.id = editId;
+
             if(sheetName === 'Berita') { payload.judul = document.getElementById('inp_judul').value; payload.kategori = document.getElementById('inp_kategori').value; payload.gambar = document.getElementById('inp_gambar').value; payload.konten = document.getElementById('inp_konten').value; }
             else if(sheetName === 'Prestasi') { payload.judul = document.getElementById('inp_judul').value; payload.kategori = document.getElementById('inp_kategori').value; payload.gambar = document.getElementById('inp_gambar').value; }
             else if(sheetName === 'Guru') { payload.nama = document.getElementById('inp_nama').value; payload.jabatan = document.getElementById('inp_jabatan').value; payload.gambar = document.getElementById('inp_gambar').value; }
@@ -960,17 +978,38 @@
                     await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     await fetchData();
                 } else {
-                    payload.id = Date.now().toString(); payload.tanggal = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
-                    if(sheetName==='Berita') appData.berita.unshift(payload);
-                    if(sheetName==='Prestasi') appData.prestasi.unshift(payload);
-                    if(sheetName==='Guru') appData.guru.unshift(payload);
+                    // SIMULASI LOKAL (Jika API belum dipasang)
+                    if(!editId) {
+                        // Tambah Baru
+                        payload.id = Date.now().toString(); payload.tanggal = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                        if(sheetName==='Berita') appData.berita.unshift(payload);
+                        if(sheetName==='Prestasi') appData.prestasi.unshift(payload);
+                        if(sheetName==='Guru') appData.guru.unshift(payload);
+                    } else {
+                        // Update Data
+                        let targetArray = sheetName === 'Berita' ? appData.berita : (sheetName === 'Prestasi' ? appData.prestasi : appData.guru);
+                        let idx = targetArray.findIndex(x => x.id == editId);
+                        if(idx !== -1) {
+                            Object.keys(payload).forEach(key => {
+                                if(key !== 'action' && key !== 'sheetName') targetArray[idx][key] = payload[key];
+                            });
+                        }
+                    }
                 }
                 document.getElementById('crud-modal').classList.add('hidden');
+                
+                // Refresh View
                 renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
-                alert("Data berhasil ditambahkan!");
+                
+                // Jika sedang membaca artikel yang di-edit, refresh isinya
+                if(!document.getElementById('view-berita-detail').classList.contains('hidden') && editId) {
+                    bacaBerita(editId);
+                }
+
+                alert("Data berhasil disimpan!");
             } catch(err) { alert("Gagal menyimpan data."); }
             
-            btn.innerHTML = 'Simpan ke Database'; btn.disabled = false;
+            btn.innerHTML = 'Simpan Perubahan'; btn.disabled = false;
         }
 
         async function hapusData(e, id, sheetName) {
