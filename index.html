@@ -751,8 +751,17 @@
                 if(appData.pengaturan) {
                     for (const [id, value] of Object.entries(appData.pengaturan)) {
                         const el = document.getElementById(id);
-                        if (el.tagName === 'IMG' || el.tagName === 'IFRAME') {
-                            if(value && value.trim() !== '') el.src = value; // Hanya overwrite jika data dari DB ada isinya
+                        
+                        // Perbaikan: Pastikan elemen 'el' ditemukan sebelum mengecek tagName
+                        if (!el) continue; 
+                        
+                        // Bypass: Jangan pernah me-replace gambar hero-bg dari database
+                        if (id === 'edit-hero-bg') continue;
+
+                        if (value && value.toString().trim() !== '') {
+                            if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
+                            else if (el.tagName === 'A') el.href = value;
+                            else el.innerHTML = value;
                         }
                     }
                 }
@@ -764,8 +773,17 @@
                 const saved = JSON.parse(localStorage.getItem('spemda_static_content') || '{}');
                 for (const [id, value] of Object.entries(saved)) {
                     const el = document.getElementById(id);
-                    if (el.tagName === 'IMG' || el.tagName === 'IFRAME') {
-                        if(value && value.trim() !== '') el.src = value; // Hanya overwrite jika data dari DB ada isinya
+                    
+                    // Perbaikan: Pastikan elemen 'el' ditemukan
+                    if (!el) continue; 
+                    
+                    // Bypass: Jangan pernah me-replace gambar hero-bg dari database/cache
+                    if (id === 'edit-hero-bg') continue;
+
+                    if (value && value.toString().trim() !== '') {
+                        if (el.tagName === 'IMG' || el.tagName === 'IFRAME') el.src = value;
+                        else if (el.tagName === 'A') el.href = value;
+                        else el.innerHTML = value;
                     }
                 }
             }
