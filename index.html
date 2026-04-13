@@ -240,11 +240,12 @@
                     </div>
 
                     <div class="lg:pl-10">
-                        <div class="bg-white p-8 rounded-3xl shadow-xl relative border border-gray-100 text-center mt-12 lg:mt-0">
-                            <div class="absolute -top-16 left-1/2 transform -translate-x-1/2">
-                                <img id="edit-kepsek-img" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=200&h=200&auto=format&fit=crop" class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover editable-img">
+                        <div class="bg-white p-8 rounded-3xl shadow-xl relative border border-gray-100 text-center mt-16 lg:mt-0">
+                            <!-- Foto Kepsek Diperbesar (w-40/h-40 di mobile, w-48/h-48 di desktop) -->
+                            <div class="absolute -top-20 md:-top-24 left-1/2 transform -translate-x-1/2">
+                                <img id="edit-kepsek-img" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=300&h=300&auto=format&fit=crop" class="w-40 h-40 md:w-48 md:h-48 rounded-full border-[6px] border-white shadow-xl object-cover editable-img">
                             </div>
-                            <div class="mt-16">
+                            <div class="mt-20 md:mt-24">
                                 <h3 id="edit-kepsek-name" class="text-2xl font-bold text-gray-900 editable">Drs. H. Fulan, M.Pd</h3>
                                 <p class="text-sm text-white bg-muda-600 inline-block px-4 py-1 rounded-full font-semibold mb-8 mt-2 shadow-sm">Kepala Sekolah</p>
                                 <i class="fas fa-quote-left text-4xl text-gray-200 mb-4 block"></i>
@@ -261,6 +262,7 @@
                         <div class="w-20 h-1.5 bg-accent-500 mx-auto rounded mb-4"></div>
                         <button onclick="openModal('Guru')" class="admin-only inline-block bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 mx-auto shadow transition"><i class="fas fa-plus"></i> Tambah Guru Baru</button>
                     </div>
+                    <!-- Grid Guru Diubah menjadi 5 kolom (lg:grid-cols-5) agar kartu lebih kecil -->
                     <div id="guru-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                         <!-- Loaded via JS -->
                         <div class="col-span-full text-center py-10"><div class="loader mx-auto"></div></div>
@@ -691,14 +693,21 @@
             try {
                 if(!APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
                     const payload = { action: 'saveSettings', edits: edits };
-                    const res = await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const res = await fetch(APP_SCRIPT_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload) 
+                    });
                     const result = await res.json();
                     if(result.status === 'success') alert("Berhasil! Perubahan disimpan ke Database.");
                     else alert("Gagal menyimpan: " + result.message);
                 } else {
                     alert("Tersimpan di Local Storage browser (Simulasi).\n(Silakan Update variabel APP_SCRIPT_URL pada baris paling bawah kode)");
                 }
-            } catch(e) { alert("Koneksi gagal."); }
+            } catch(err) { 
+                console.error("Error Simpan Statis:", err);
+                alert("Koneksi gagal atau API error. Pastikan SHEET_ID di Apps Script sudah benar."); 
+            }
 
             btn.innerHTML = originalHTML;
             btn.disabled = false;
@@ -808,11 +817,15 @@
             appData.guru.forEach(g => {
                 const img = g.gambar || `https://ui-avatars.com/api/?name=${encodeURI(g.nama)}&background=1e3a8a&color=fff&size=200`;
                 container.innerHTML += `
-                    <div class="relative bg-white rounded-2xl shadow-sm p-5 text-center border border-gray-100 hover:-translate-y-1 transition duration-300">
+                    <div class="relative bg-white rounded-2xl shadow-sm hover:shadow-lg transition duration-300 border border-gray-100 overflow-hidden group">
                         ${getAdminBtns(g.id, 'Guru')}
-                        <img src="${img}" class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-gray-50 shadow-sm">
-                        <h4 class="font-bold text-sm text-gray-800 line-clamp-1" title="${g.nama}">${g.nama}</h4>
-                        <p class="text-xs text-muda-600 font-medium mt-1">${g.jabatan}</p>
+                        <div class="aspect-[3/4] overflow-hidden bg-gray-100">
+                            <img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </div>
+                        <div class="p-4 text-center border-t border-gray-50 bg-white relative z-10">
+                            <h4 class="font-bold text-sm text-gray-900 line-clamp-1 mb-1" title="${g.nama}">${g.nama}</h4>
+                            <span class="inline-block bg-muda-50 text-muda-600 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm line-clamp-1" title="${g.jabatan}">${g.jabatan}</span>
+                        </div>
                     </div>`;
             });
         }
@@ -975,7 +988,14 @@
 
             try {
                 if(!APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
-                    await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const res = await fetch(APP_SCRIPT_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload) 
+                    });
+                    const result = await res.json();
+                    if(result.status === 'error') throw new Error(result.message);
+                    
                     await fetchData();
                 } else {
                     // SIMULASI LOKAL (Jika API belum dipasang)
@@ -1007,7 +1027,10 @@
                 }
 
                 alert("Data berhasil disimpan!");
-            } catch(err) { alert("Gagal menyimpan data."); }
+            } catch(err) { 
+                console.error("Error Simpan:", err);
+                alert("Gagal menyimpan data: " + (err.message || "Periksa koneksi atau console. Pastikan SHEET_ID di Apps Script sudah benar.")); 
+            }
             
             btn.innerHTML = 'Simpan Perubahan'; btn.disabled = false;
         }
@@ -1021,7 +1044,14 @@
 
             try {
                 if(!APP_SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
-                    await fetch(APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteData', sheetName: sheetName, id: id }) });
+                    const res = await fetch(APP_SCRIPT_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'deleteData', sheetName: sheetName, id: id }) 
+                    });
+                    const result = await res.json();
+                    if(result.status === 'error') throw new Error(result.message);
+                    
                     await fetchData();
                 } else {
                     if(sheetName==='Berita') appData.berita = appData.berita.filter(x => x.id != id);
@@ -1029,7 +1059,10 @@
                     if(sheetName==='Guru') appData.guru = appData.guru.filter(x => x.id != id);
                 }
                 renderHomeBerita(); renderHomePrestasi(); renderGuru(); renderBeritaPage('Semua'); renderPrestasiPage('Semua');
-            } catch(e) { alert("Gagal menghapus data."); }
+            } catch(err) { 
+                console.error("Error Hapus:", err);
+                alert("Gagal menghapus data: " + (err.message || "Periksa koneksi atau console browser.")); 
+            }
         }
     </script>
 </body>
